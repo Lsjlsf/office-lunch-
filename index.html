@@ -43,13 +43,13 @@
         .setting-box { background: white; padding: 15px; border-radius: 5px; border: 1px solid #ccc; margin-bottom: 20px; }
         .session-info { font-size: 12px; color: #666; text-align: right; margin-top: 10px; }
         
-        /* 🐛 修正：餐廳清單排版與文字截斷 */
+      /* 🐛 徹底修正：處理 flexbox 內部長網址撐爆問題 */
         .res-list { list-style-type: none; padding: 0; margin: 10px 0 0 0; }
-        .res-list li { display: flex; justify-content: space-between; align-items: center; padding: 8px; background: #f8f9fa; border: 1px solid #ddd; margin-bottom: 5px; border-radius: 4px; gap: 10px;}
-        .res-info { display: flex; align-items: center; flex: 1; min-width: 0; } /* min-width: 0 確保 flex 子元素可以縮小 */
-        .res-info strong { white-space: nowrap; margin-right: 5px; }
-        .text-truncate { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: #888; font-size: 0.9em; }
-        .res-actions { flex-shrink: 0; display: flex; gap: 5px; } /* flex-shrink: 0 確保按鈕不會被擠壓 */
+        .res-list li { display: flex; justify-content: space-between; align-items: center; padding: 8px; background: #f8f9fa; border: 1px solid #ddd; margin-bottom: 5px; border-radius: 4px; gap: 10px; overflow: hidden; }
+        .res-info { display: flex; align-items: center; flex: 1; min-width: 0; gap: 8px; }
+        .res-info .store-badge, .res-info strong { flex-shrink: 0; white-space: nowrap; }
+        .text-truncate { display: block; flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: #888; font-size: 0.9em; }
+        .res-actions { flex-shrink: 0; display: flex; gap: 5px; }
 
         /* === 統計與表格 === */
         .summary-box { background: #fff; padding: 15px; border-radius: 5px; border: 2px dashed #28a745; margin-bottom: 20px; }
@@ -455,7 +455,7 @@
         catch { return /^[\w\-\.\/]+\.(jpg|jpeg|png|gif|webp)$/i.test(url); }
     }
 
-    function renderSettingRestaurantList() {
+  function renderSettingRestaurantList() {
         const list = document.getElementById('setting-res-list');
         if(restaurantList.length === 0) return list.innerHTML = '<li style="color:#888;">目前尚無名單，請在上方新增</li>';
         
@@ -464,14 +464,14 @@
             const safeName = escapeHTML(res.name);
             const safeImg = escapeHTML(res.img || '無圖片');
             
-            // 🐛 在這裡修正了排版 Bug，使用 .res-info 限制寬度並允許文字截斷
+            // 👇 這裡的 HTML 結構已經更新 👇
             return `
                 <li>
-                    <span class="res-info">
+                    <div class="res-info">
                         <span class="store-badge" style="background: ${style.bg}; color: ${style.text}; border: 1px solid ${style.border};">${escapeHTML(res.category || '未分類')}</span>
                         <strong>${safeName}</strong> 
                         <span class="text-truncate" title="${safeImg}">(${safeImg})</span>
-                    </span>
+                    </div>
                     <div class="res-actions">
                         <button class="btn-edit" onclick="editRestaurant(${index})">修改</button>
                         <button class="btn-remove" onclick="removeRestaurant(${index})">刪除</button>
@@ -480,7 +480,6 @@
             `;
         }).join('');
     }
-
     function addNewRestaurant() {
         const cat = document.getElementById('new-res-category').value;
         const name = document.getElementById('new-res-name').value.trim();
