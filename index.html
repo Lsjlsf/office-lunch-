@@ -43,7 +43,7 @@
         .setting-box { background: white; padding: 15px; border-radius: 5px; border: 1px solid #ccc; margin-bottom: 20px; }
         .session-info { font-size: 12px; color: #666; text-align: right; margin-top: 10px; }
         
-      /* 🐛 徹底修正：處理 flexbox 內部長網址撐爆問題 */
+        /* 🐛 徹底修正：處理 flexbox 內部長網址撐爆問題 */
         .res-list { list-style-type: none; padding: 0; margin: 10px 0 0 0; }
         .res-list li { display: flex; justify-content: space-between; align-items: center; padding: 8px; background: #f8f9fa; border: 1px solid #ddd; margin-bottom: 5px; border-radius: 4px; gap: 10px; overflow: hidden; }
         .res-info { display: flex; align-items: center; flex: 1; min-width: 0; gap: 8px; }
@@ -87,7 +87,7 @@
 
 <div class="container">
     <h1>🍽️ 辦公室午餐點餐機</h1>
-    <p style="text-align: center; color: #666;">請先選擇餐廳參考菜單，再輸入訂單。</p>
+    <p style="text-align: center; color: #666;">請先選擇餐廳，系統將自動載入最新菜單。</p>
 
     <div class="form-group">
         <label for="restaurant-select">🏪 選擇餐廳：</label>
@@ -153,7 +153,7 @@
             <div style="display: flex; gap: 10px; margin-bottom: 10px;">
                 <select id="new-res-category" style="flex: 1;"></select>
                 <input type="text" id="new-res-name" placeholder="餐廳名 (如: 嘉李)" style="flex: 1.5;" maxlength="100">
-                <input type="text" id="new-res-img" placeholder="圖片網址/檔名" style="flex: 1.5;" maxlength="500">
+                <input type="text" id="new-res-img" placeholder="(可留空) 自動從 menus 資料夾抓圖" style="flex: 1.5;" maxlength="500">
             </div>
             <button class="btn btn-add" onclick="addNewRestaurant()" style="width: auto; padding: 8px 15px;">+ 加入名單</button>
             <ul class="res-list" id="setting-res-list"></ul>
@@ -233,7 +233,7 @@
     </div>
     <div class="form-group">
         <label>圖片網址或檔名：</label>
-        <input type="text" id="edit-res-img-input" placeholder="請輸入圖片網址或檔名" maxlength="500">
+        <input type="text" id="edit-res-img-input" placeholder="(可留空) 自動從 menus 資料夾抓圖" maxlength="500">
     </div>
     <br>
     <button class="btn btn-submit" onclick="saveEditRestaurant()">儲存修改</button>
@@ -431,21 +431,71 @@
         updateMenuDisplay();
     }
 
-    function updateMenuDisplay() {
+    // 🚀 核心升級：自動透過 GitHub API 讀取 menus 資料夾內最新圖片
+    async function updateMenuDisplay() {
         const select = document.getElementById('restaurant-select');
         const wrapper = document.getElementById('menu-wrapper');
         const imgEl = document.getElementById('display-img-menu');
         
-        if (select.selectedIndex <= 0) return wrapper.style.display = 'none';
+        if (select.selectedIndex <= 0) {
+            wrapper.style.display = 'none';
+            return;
+        }
 
-        const imgSrc = select.options[select.selectedIndex].getAttribute('data-img');
-        if (imgSrc && isValidImageUrl(imgSrc)) {
-            imgEl.style.opacity = '0.3'; 
-            imgEl.onload = () => imgEl.style.opacity = '1';
-            imgEl.src = imgSrc;
-            imgEl.onerror = () => wrapper.style.display = 'none';
-            wrapper.style.display = 'flex';
-        } else {
+        const resName = select.options[select.selectedIndex].value;
+        const manualImg = select.options[select.selectedIndex].getAttribute('data-img');
+        
+        wrapper.style.display = 'flex';
+        imgEl.style.opacity = '0.3';
+        imgEl.src = ''; 
+        
+        // 如果後台有手動指定網址，優先使用手動指定的
+        if (manualImg && isValidImageUrl(manualImg)) {
+            const timestamp = new Date().getTime();
+            imgEl.src = manualImg.includes('?') ? `${manualImg}&t=${timestamp}` : `${manualImg}?t=${timestamp}`;
+            imgEl.onload = () => { imgEl.style.opacity = '1'; };
+            imgEl.onerror = () => { wrapper.style.display = 'none'; };
+            return;
+        }
+
+        // 否則，自動去 GitHub 撈取
+        const owner = 'LsJlsf';
+        const repo = 'office-lunch-'; 
+        const folder = 'menus';       
+        const branch = 'main';        
+        const apiUrl = `https://api.github.com/repos/${owner}/${repo}/contents/${folder}?ref=${branch}`;
+
+        try {
+            const response = await fetch(apiUrl);
+            
+            if (!response.ok) {
+                throw new Error('無法讀取資料夾 (可能是 menus 資料夾不存在)');
+            }
+
+            const files = await response.json();
+            
+            // 尋找檔名中包含「餐廳名稱」的圖片
+            const matchedFiles = files.filter(file => {
+                const isImage = file.name.match(/\.(jpg|jpeg|png|gif|webp)$/i);
+                const includesName = file.name.includes(resName);
+                return isImage && includesName;
+            });
+
+            if (matchedFiles.length > 0) {
+                // 檔名降冪排序，抓取最新的一張
+                matchedFiles.sort((a, b) => b.name.localeCompare(a.name));
+                const latestImage = matchedFiles[0]; 
+                const timestamp = new Date().getTime();
+                
+                imgEl.src = `${latestImage.download_url}?t=${timestamp}`;
+                imgEl.onload = () => { imgEl.style.opacity = '1'; };
+                imgEl.onerror = () => { wrapper.style.display = 'none'; };
+            } else {
+                wrapper.style.display = 'none';
+                console.warn(`在 menus 資料夾中，找不到檔名包含「${resName}」的圖片。`);
+            }
+        } catch (error) {
+            console.error('抓取圖片失敗:', error);
             wrapper.style.display = 'none';
         }
     }
@@ -455,16 +505,15 @@
         catch { return /^[\w\-\.\/]+\.(jpg|jpeg|png|gif|webp)$/i.test(url); }
     }
 
-  function renderSettingRestaurantList() {
+    function renderSettingRestaurantList() {
         const list = document.getElementById('setting-res-list');
         if(restaurantList.length === 0) return list.innerHTML = '<li style="color:#888;">目前尚無名單，請在上方新增</li>';
         
         list.innerHTML = restaurantList.map((res, index) => {
             const style = getCategoryStyle(res.category || '未分類');
             const safeName = escapeHTML(res.name);
-            const safeImg = escapeHTML(res.img || '無圖片');
+            const safeImg = escapeHTML(res.img || '(自動抓圖)');
             
-            // 👇 這裡的 HTML 結構已經更新 👇
             return `
                 <li>
                     <div class="res-info">
@@ -480,6 +529,7 @@
             `;
         }).join('');
     }
+
     function addNewRestaurant() {
         const cat = document.getElementById('new-res-category').value;
         const name = document.getElementById('new-res-name').value.trim();
