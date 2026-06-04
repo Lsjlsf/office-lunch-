@@ -43,6 +43,7 @@
             max-width: 100%; 
             max-height: 100%; 
             object-fit: contain; 
+            transition: opacity 0.3s;
         }
         
         .public-list { background: #fff3cd; padding: 15px; border-radius: 5px; border: 1px solid #ffeeba; }
@@ -274,7 +275,6 @@
     <button class="btn btn-manager" onclick="closeModals()">取消</button>
 </div>
 
-<!-- 引入餐廳配置 -->
 <script src="restaurants-config.js"></script>
 
 <script>
@@ -323,12 +323,18 @@
         if (constantTimeCompare(code, PASSWORD_CONFIG.office)) {
             document.getElementById('security-overlay').style.display = 'none';
             document.getElementById('office-passcode').value = '';
-            // 初始化餐廳配置
-            if (typeof initializeRestaurantsFromConfig === 'function') {
-                initializeRestaurantsFromConfig();
-                initUserRestaurantSelect();
-                renderPublicList();
+            
+            // 初始化餐廳配置，加入 try...catch 避免外部檔案異常導致當機
+            try {
+                if (typeof initializeRestaurantsFromConfig === 'function') {
+                    initializeRestaurantsFromConfig();
+                }
+            } catch (e) {
+                console.warn('載入 restaurants-config.js 失敗', e);
             }
+            
+            initUserRestaurantSelect();
+            renderPublicList();
         } else {
             alert('❌ 密碼錯誤，請確認您是內部員工！');
             document.getElementById('office-passcode').value = '';
@@ -530,7 +536,11 @@
 
         if (imgSrc) {
             if (isValidImageUrl(imgSrc)) {
+                // 增加過渡效果避免殘影
+                imgEl.style.opacity = '0.3'; 
+                imgEl.onload = () => { imgEl.style.opacity = '1'; };
                 imgEl.src = imgSrc;
+                
                 imgEl.onerror = () => {
                     wrapper.style.display = 'none';
                     console.warn('Failed to load image:', imgSrc);
@@ -686,7 +696,8 @@
             total += (price * qty);
         }
         total = Math.min(total, 999999);
-        document.getElementById('form-total').innerText = total;
+        // 加上千分位顯示
+        document.getElementById('form-total').innerText = total.toLocaleString('en-US');
         return total;
     }
 
@@ -762,7 +773,7 @@
                         <span class="store-badge">${safeRes}</span>
                         <span class="time-stamp">(${safeTime})</span>
                     </div>
-                    <strong style="color: #c0392b; font-size: 16px;">總計: $${order.total}</strong>
+                    <strong style="color: #c0392b; font-size: 16px;">總計: $${order.total.toLocaleString('en-US')}</strong>
                 </div>
                 <div style="margin-top: 5px;">點了： ${order.details.map(item => {
                     const safeItemName = escapeHTML(item.name);
@@ -797,6 +808,10 @@
             sessionData.loginTime = Date.now();
             updateSessionInfo();
             document.getElementById('manager-area').style.display = 'block';
+            
+            // 🐛 修正：登入時確保分類標籤有被渲染
+            initCategoryDisplay(); 
+            
             renderSettingRestaurantList();
             renderManagerArea();
         } else {
@@ -850,7 +865,7 @@
                         return `${safeItem} ${item.remark ? `<span style="color:#e74c3c;">(${safeRemark})</span>` : ''} ($${item.price} x ${item.qty})`;
                     }).join('<br>')}
                 </td>
-                <td><strong>$${order.total}</strong></td>
+                <td><strong>$${order.total.toLocaleString('en-US')}</strong></td>
                 <td class="action-td">
                     <button class="btn-edit" onclick="openEditModal(${index})">✏️</button>
                     <button class="btn-remove" onclick="deleteSingleOrder(${index})">刪</button>
@@ -893,7 +908,7 @@
 
         document.getElementById('manager-table-body').innerHTML = html;
         document.getElementById('manager-summary-list').innerHTML = summaryHtml;
-        document.getElementById('manager-grand-total').innerText = grandTotal;
+        document.getElementById('manager-grand-total').innerText = grandTotal.toLocaleString('en-US');
     }
 
     function deleteSingleOrder(index) {
