@@ -62,3 +62,80 @@ function initializeRestaurantsFromConfig() {
         console.log('✅ 已初始化餐廳配置');
     }
 }
+
+// 以下為介面改善：在管理設定清單顯示縮圖、檔名截斷，以及覆寫 renderSettingRestaurantList 的函式
+(function() {
+    // 注入額外 CSS（只注入一次）
+    const STYLE_ID = 'rls-fix-style';
+    if (!document.getElementById(STYLE_ID)) {
+        const css = `
+        /* 設定清單縮圖與截斷樣式 */
+        .res-list { list-style-type: none; padding: 0; margin: 10px 0 0 0; }
+        .res-list li { display: flex; align-items: center; justify-content: space-between; padding: 10px; border: 1px solid #eee; background: #fff; border-radius: 6px; margin-bottom: 8px; }
+        .res-list .res-left { display:flex; align-items:center; gap:10px; min-width:0; }
+        .res-list .thumb { width:80px; height:60px; object-fit:cover; border-radius:4px; margin-right:10px; }
+        .res-list .thumb-placeholder { width:80px; height:60px; background:#f1f3f5; border-radius:4px; display:flex; align-items:center; justify-content:center; color:#888; margin-right:10px; }
+        .res-list .meta { min-width:0; }
+        .res-list .meta .filename { font-size:12px; color:#666; max-width:420px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+        .res-list .actions { display:flex; gap:8px; margin-left:12px; flex-shrink:0; }
+        `;
+        const s = document.createElement('style');
+        s.id = STYLE_ID;
+        s.textContent = css;
+        document.head && document.head.appendChild(s);
+    }
+
+    // 覆寫全域的 renderSettingRestaurantList（index.html 中會呼叫此函式）
+    window.renderSettingRestaurantList = function() {
+        try {
+            const listEl = document.getElementById('setting-res-list');
+            if (!listEl) return;
+            if (!Array.isArray(restaurantList) || restaurantList.length === 0) {
+                listEl.innerHTML = '<li style="color:#888;">目前尚無名單，請在上方新增</li>';
+                return;
+            }
+
+            listEl.innerHTML = restaurantList.map((res, index) => {
+                const style = (typeof getCategoryStyle === 'function') ? getCategoryStyle(res.category || '未分類') : { bg:'#f1f3f5', text:'#333', border:'#ddd' };
+                const safeName = (typeof escapeHTML === 'function') ? escapeHTML(res.name) : (res.name || '');
+                const imgUrl = res.img || '';
+
+                // 嘗試從 URL 取得檔名並 decode，若失敗顯示原始
+                let imgFilename = '無圖片';
+                if (imgUrl) {
+                    try {
+                        const u = new URL(imgUrl);
+                        imgFilename = decodeURIComponent(u.pathname.split('/').pop() || imgUrl);
+                    } catch (e) {
+                        imgFilename = imgUrl;
+                    }
+                }
+
+                const safeFilename = (typeof escapeHTML === 'function') ? escapeHTML(imgFilename) : imgFilename;
+                const safeImg = (typeof escapeHTML === 'function') ? escapeHTML(imgUrl) : imgUrl;
+
+                const imgHtml = imgUrl
+                    ? `<img class="thumb" src="${safeImg}" alt="${safeName}" onerror="this.style.display='none'">`
+                    : `<div class="thumb-placeholder">無圖</div>`;
+
+                return `
+                    <li>
+                        <div class="res-left">
+                            ${imgHtml}
+                            <div class="meta">
+                                <div><span class="store-badge" style="background: ${style.bg}; color: ${style.text}; border: 1px solid ${style.border}; font-size:11px; font-weight:bold; vertical-align:middle;">${(res.category? escapeHTML(res.category): '未分類')}</span> <strong style="margin-left:8px;">${safeName}</strong></div>
+                                <div class="filename">${safeFilename}</div>
+                            </div>
+                        </div>
+                        <div class="actions">
+                            <button class="btn-edit" style="padding:6px 10px;" onclick="editRestaurant(${index})">修改</button>
+                            <button class="btn-remove" style="padding:6px 10px;" onclick="removeRestaurant(${index})">刪除</button>
+                        </div>
+                    </li>
+                `;
+            }).join('');
+        } catch (err) {
+            console.warn('renderSettingRestaurantList override failed', err);
+        }
+    };
+})();
