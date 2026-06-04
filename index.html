@@ -5,106 +5,74 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>公司午餐公用點餐機</title>
     <style>
+        /* === 基礎與排版 === */
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f0f2f5; padding: 20px; color: #333; }
         .container { max-width: 600px; margin: 0 auto; background: white; padding: 25px; border-radius: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); position: relative;}
         h1, h2, h3, h4, h5 { text-align: center; color: #2c3e50; }
+        hr { border: 0; height: 1px; background: #ddd; margin: 25px 0; }
+        
+        /* === 表單與輸入框 === */
         .form-group { margin-bottom: 15px; }
         label { display: block; margin-bottom: 5px; font-weight: bold; }
         input[type="text"], input[type="number"], input[type="password"], select { width: 100%; padding: 10px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 5px; font-size: 16px; }
         .item-row { display: flex; gap: 10px; margin-bottom: 10px; align-items: center; background: #f8f9fa; padding: 10px; border-radius: 5px; border: 1px solid #e9ecef;}
         .item-row input { flex: 1; min-width: 0; }
+        
+        /* === 按鈕設計 === */
         .btn { padding: 10px 15px; border: none; border-radius: 5px; cursor: pointer; font-size: 16px; font-weight: bold; width: 100%; margin-bottom: 10px; }
         .btn-add { background: #28a745; color: white; }
         .btn-remove { background: #dc3545; color: white; width: auto; padding: 10px; }
-        .btn-edit { background: #f39c12; color: white; width: auto; padding: 10px; margin-right: 5px;}
+        .btn-edit { background: #f39c12; color: white; width: auto; padding: 10px; }
         .btn-submit { background: #007bff; color: white; font-size: 18px; padding: 12px; }
         .btn-manager { background: #6c757d; color: white; margin-top: 20px; }
         .btn-clear { background: #dc3545; color: white; margin-top: 10px; }
         .btn-export { background: #17a2b8; color: white; margin-top: 10px; }
+        
+        /* === 顯示區塊 (總計、圖片、公佈欄) === */
         .total-box { font-size: 20px; font-weight: bold; text-align: right; margin-bottom: 20px; color: #e74c3c; }
-        
-        hr { border: 0; height: 1px; background: #ddd; margin: 25px 0; }
-        
-        .menu-img-wrapper { 
-            width: 100%; 
-            height: 400px; 
-            background: #fafafa; 
-            border: 1px solid #ddd; 
-            border-radius: 5px; 
-            display: flex; 
-            align-items: center; 
-            justify-content: center; 
-            margin-top: 10px;
-            margin-bottom: 15px; 
-            overflow: hidden;
-            display: none; 
-        }
-        .menu-img-wrapper img { 
-            max-width: 100%; 
-            max-height: 100%; 
-            object-fit: contain; 
-            transition: opacity 0.3s;
-        }
-        
+        .menu-img-wrapper { width: 100%; height: 400px; background: #fafafa; border: 1px solid #ddd; border-radius: 5px; display: none; align-items: center; justify-content: center; margin-top: 10px; margin-bottom: 15px; overflow: hidden; }
+        .menu-img-wrapper img { max-width: 100%; max-height: 100%; object-fit: contain; transition: opacity 0.3s; }
         .public-list { background: #fff3cd; padding: 15px; border-radius: 5px; border: 1px solid #ffeeba; }
         .order-card { background: white; padding: 10px; margin-bottom: 10px; border-radius: 5px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
         .order-card strong { color: #d35400; font-size: 18px; }
-        .store-badge { background: #1e8449; color: white; padding: 2px 6px; border-radius: 4px; font-size: 13px; margin-right: 5px;}
+        .store-badge { background: #1e8449; color: white; padding: 2px 6px; border-radius: 4px; font-size: 13px; margin-right: 5px; white-space: nowrap;}
         .time-stamp { color: #888; font-size: 13px; margin-left: 5px; }
         
+        /* === 管理員後台 === */
         #manager-area { display: none; background: #d4edda; padding: 15px; border-radius: 5px; border: 1px solid #c3e6cb; margin-top: 20px;}
         .setting-box { background: white; padding: 15px; border-radius: 5px; border: 1px solid #ccc; margin-bottom: 20px; }
-        .res-list { list-style-type: none; padding: 0; margin: 10px 0 0 0; }
-        .res-list li { display: flex; justify-content: space-between; align-items: center; padding: 8px; background: #f8f9fa; border: 1px solid #ddd; margin-bottom: 5px; border-radius: 4px;}
+        .session-info { font-size: 12px; color: #666; text-align: right; margin-top: 10px; }
         
+        /* 🐛 修正：餐廳清單排版與文字截斷 */
+        .res-list { list-style-type: none; padding: 0; margin: 10px 0 0 0; }
+        .res-list li { display: flex; justify-content: space-between; align-items: center; padding: 8px; background: #f8f9fa; border: 1px solid #ddd; margin-bottom: 5px; border-radius: 4px; gap: 10px;}
+        .res-info { display: flex; align-items: center; flex: 1; min-width: 0; } /* min-width: 0 確保 flex 子元素可以縮小 */
+        .res-info strong { white-space: nowrap; margin-right: 5px; }
+        .text-truncate { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: #888; font-size: 0.9em; }
+        .res-actions { flex-shrink: 0; display: flex; gap: 5px; } /* flex-shrink: 0 確保按鈕不會被擠壓 */
+
+        /* === 統計與表格 === */
         .summary-box { background: #fff; padding: 15px; border-radius: 5px; border: 2px dashed #28a745; margin-bottom: 20px; }
         .summary-box h4 { margin-top: 0; color: #28a745; font-size: 18px; text-align: left;}
         .summary-list { list-style-type: none; padding-left: 0; margin: 0; }
         .summary-list li { font-size: 16px; padding: 10px 0; border-bottom: 1px dashed #eee; display: flex; flex-direction: column; }
         .summary-qty { font-weight: bold; color: #d35400; font-size: 18px;}
         .res-group-title { background: #e2efda; padding: 5px 10px; margin: 10px 0 5px 0; border-radius: 4px; font-weight: bold; color: #2e7d32;}
-
         table { width: 100%; border-collapse: collapse; margin-top: 10px; background: white;}
         th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
         th { background: #f2f2f2; }
         .action-td { text-align: center; white-space: nowrap; }
 
+        /* === 彈出視窗與互動元件 === */
         .overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 99; }
         .modal { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 25px; border-radius: 10px; z-index: 100; width: 90%; max-width: 500px; }
-        
         optgroup { font-weight: bold; color: #2c3e50; background: #f8f9fa; }
         
-        /* 拖曳分類標籤樣式優化 */
-        .category-badge { 
-            display: inline-flex; 
-            align-items: center; 
-            border: 1px solid #ced4da; 
-            border-radius: 20px; 
-            padding: 5px 12px; 
-            margin: 5px; 
-            font-size: 14px; 
-            box-shadow: 0 1px 2px rgba(0,0,0,0.1); 
-            cursor: grab; /* 提示可拖曳 */
-            transition: transform 0.2s, box-shadow 0.2s;
-        }
-        .category-badge:active {
-            cursor: grabbing;
-        }
-        .category-badge.drag-over {
-            border: 2px dashed #000;
-            opacity: 0.7;
-        }
-        .category-remove { 
-            margin-left: 8px; 
-            cursor: pointer; 
-            font-weight: bold; 
-            opacity: 0.5; 
-            border-left: 1px solid rgba(0,0,0,0.1); 
-            padding-left: 8px;
-        }
+        .category-badge { display: inline-flex; align-items: center; border: 1px solid #ced4da; border-radius: 20px; padding: 5px 12px; margin: 5px; font-size: 14px; box-shadow: 0 1px 2px rgba(0,0,0,0.1); cursor: grab; transition: transform 0.2s, box-shadow 0.2s; }
+        .category-badge:active { cursor: grabbing; }
+        .category-badge.drag-over { border: 2px dashed #000; opacity: 0.7; }
+        .category-remove { margin-left: 8px; cursor: pointer; font-weight: bold; opacity: 0.5; border-left: 1px solid rgba(0,0,0,0.1); padding-left: 8px; }
         .category-remove:hover { opacity: 1; color: #dc3545 !important; }
-        
-        .session-info { font-size: 12px; color: #666; text-align: right; margin-top: 10px; }
     </style>
 </head>
 <body>
@@ -116,6 +84,7 @@
         <button class="btn btn-submit" onclick="verifyOfficePasscode()">進入系統</button>
     </div>
 </div>
+
 <div class="container">
     <h1>🍽️ 辦公室午餐點餐機</h1>
     <p style="text-align: center; color: #666;">請先選擇餐廳參考菜單，再輸入訂單。</p>
@@ -212,7 +181,6 @@
             </table>
         </div>
         <br>
-        
         <button class="btn btn-export" onclick="exportToCSV()">💾 匯出為 Excel (CSV) 備份</button>
         <button class="btn btn-clear" onclick="confirmClearOrders()">⚠️ 清空所有訂單</button>
     </div>
@@ -238,7 +206,6 @@
         <label>選擇餐廳：</label>
         <select id="edit-restaurant-select"></select>
     </div>
-
     <div class="form-group">
         <label>訂購人：</label>
         <input type="text" id="edit-name" maxlength="50">
@@ -260,12 +227,10 @@
         <label>餐廳分類：</label>
         <select id="edit-res-category-select"></select>
     </div>
-
     <div class="form-group">
         <label>餐廳名稱：</label>
         <input type="text" id="edit-res-name-input" placeholder="請輸入餐廳名稱" maxlength="100">
     </div>
-
     <div class="form-group">
         <label>圖片網址或檔名：</label>
         <input type="text" id="edit-res-img-input" placeholder="請輸入圖片網址或檔名" maxlength="500">
@@ -280,23 +245,17 @@
 <script>
     // 🔒 SECURITY CONFIGURATION
     const PASSWORD_CONFIG = {
-        office: '8888',        // 辦公室初始密碼 - 請改為安全的密碼
-        manager: '1234'        // 管理員密碼 - 請改為安全的密碼
+        office: '8888',
+        manager: '1234'
     };
 
-    // 會話管理
-    let sessionData = {
-        isManagerLoggedIn: false,
-        loginTime: null,
-        sessionTimeout: 30 * 60 * 1000
-    };
-
+    let sessionData = { isManagerLoggedIn: false, loginTime: null, sessionTimeout: 30 * 60 * 1000 };
     setInterval(checkSessionTimeout, 60000);
+    setInterval(updateSessionInfo, 1000);
 
     function checkSessionTimeout() {
         if (sessionData.isManagerLoggedIn && sessionData.loginTime) {
-            const elapsed = Date.now() - sessionData.loginTime;
-            if (elapsed > sessionData.sessionTimeout) {
+            if (Date.now() - sessionData.loginTime > sessionData.sessionTimeout) {
                 alert('⚠️ 會話已過期，請重新登入');
                 logoutManager();
             }
@@ -306,32 +265,21 @@
     function updateSessionInfo() {
         const timeSpan = document.getElementById('session-time');
         if (sessionData.isManagerLoggedIn && sessionData.loginTime) {
-            const date = new Date(sessionData.loginTime);
-            timeSpan.textContent = `(${date.toLocaleTimeString('zh-TW')})`;
+            timeSpan.textContent = `(${new Date(sessionData.loginTime).toLocaleTimeString('zh-TW')})`;
         }
     }
 
-    setInterval(updateSessionInfo, 1000);
-
     function verifyOfficePasscode() {
         const code = document.getElementById('office-passcode').value.trim();
-        if (!code) {
-            alert('請輸入密碼');
-            return;
-        }
+        if (!code) return alert('請輸入密碼');
         
         if (constantTimeCompare(code, PASSWORD_CONFIG.office)) {
             document.getElementById('security-overlay').style.display = 'none';
             document.getElementById('office-passcode').value = '';
             
-            // 初始化餐廳配置，加入 try...catch 避免外部檔案異常導致當機
             try {
-                if (typeof initializeRestaurantsFromConfig === 'function') {
-                    initializeRestaurantsFromConfig();
-                }
-            } catch (e) {
-                console.warn('載入 restaurants-config.js 失敗', e);
-            }
+                if (typeof initializeRestaurantsFromConfig === 'function') initializeRestaurantsFromConfig();
+            } catch (e) { console.warn('載入 restaurants-config.js 失敗', e); }
             
             initUserRestaurantSelect();
             renderPublicList();
@@ -344,17 +292,13 @@
     function constantTimeCompare(a, b) {
         if (a.length !== b.length) return false;
         let result = 0;
-        for (let i = 0; i < a.length; i++) {
-            result |= a.charCodeAt(i) ^ b.charCodeAt(i);
-        }
+        for (let i = 0; i < a.length; i++) result |= a.charCodeAt(i) ^ b.charCodeAt(i);
         return result === 0;
     }
     
     function escapeHTML(str) {
         if (typeof str !== 'string') return '';
-        return str.replace(/[&<>'"]/g, tag => ({
-            '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;'
-        }[tag] || tag));
+        return str.replace(/[&<>'"]/g, tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag));
     }
 
     function validateNumber(input) {
@@ -366,49 +310,37 @@
     let allOrders = JSON.parse(localStorage.getItem('lunchOrdersMulti')) || [];
     let restaurantList = JSON.parse(localStorage.getItem('lunchRestaurants')) || [];
     let categoryList = JSON.parse(localStorage.getItem('lunchCategories')) || ['便當', '麵食', '速食', '飲料', '其他'];
+    let catColorMap = JSON.parse(localStorage.getItem('lunchCatColorMap')) || {};
+    let dragStartIndex = null;
     
     const palette = [
-        { bg: '#e3f2fd', text: '#0d47a1', border: '#bbdefb' },
-        { bg: '#e8f5e9', text: '#1b5e20', border: '#c8e6c9' },
-        { bg: '#fff3e0', text: '#e65100', border: '#ffe0b2' },
-        { bg: '#f3e5f5', text: '#4a148c', border: '#e1bee7' },
-        { bg: '#ffebee', text: '#b71c1c', border: '#ffcdd2' },
-        { bg: '#e0f7fa', text: '#006064', border: '#b2ebf2' },
-        { bg: '#fffde7', text: '#f57f17', border: '#fff9c4' },
-        { bg: '#fce4ec', text: '#880e4f', border: '#f8bbd0' },
-        { bg: '#e8eaf6', text: '#1a237e', border: '#c5cae9' },
-        { bg: '#efebe9', text: '#4e342e', border: '#d7ccc8' }
+        { bg: '#e3f2fd', text: '#0d47a1', border: '#bbdefb' }, { bg: '#e8f5e9', text: '#1b5e20', border: '#c8e6c9' },
+        { bg: '#fff3e0', text: '#e65100', border: '#ffe0b2' }, { bg: '#f3e5f5', text: '#4a148c', border: '#e1bee7' },
+        { bg: '#ffebee', text: '#b71c1c', border: '#ffcdd2' }, { bg: '#e0f7fa', text: '#006064', border: '#b2ebf2' },
+        { bg: '#fffde7', text: '#f57f17', border: '#fff9c4' }, { bg: '#fce4ec', text: '#880e4f', border: '#f8bbd0' },
+        { bg: '#e8eaf6', text: '#1a237e', border: '#c5cae9' }, { bg: '#efebe9', text: '#4e342e', border: '#d7ccc8' }
     ];
-    let catColorMap = JSON.parse(localStorage.getItem('lunchCatColorMap')) || {};
     
     function getCategoryStyle(cat) {
         if (cat === '未分類') return { bg: '#f1f3f5', text: '#495057', border: '#dee2e6' };
-        
         if (catColorMap[cat] === undefined) {
-            let nextIndex = Object.keys(catColorMap).length % palette.length;
-            catColorMap[cat] = nextIndex;
+            catColorMap[cat] = Object.keys(catColorMap).length % palette.length;
             localStorage.setItem('lunchCatColorMap', JSON.stringify(catColorMap));
         }
         return palette[catColorMap[cat]];
     }
-
-    let dragStartIndex = null;
 
     function initCategoryDisplay() {
         const container = document.getElementById('category-badges-container');
         if (container) {
             container.innerHTML = categoryList.map((cat, index) => {
                 const style = getCategoryStyle(cat);
-                const safeCat = escapeHTML(cat);
                 return `
                     <div class="category-badge" draggable="true" data-index="${index}" 
                          style="background: ${style.bg}; color: ${style.text}; border-color: ${style.border}; font-weight: bold;"
-                         ondragstart="handleDragStart(event)" 
-                         ondragover="handleDragOver(event)" 
-                         ondrop="handleDrop(event)"
-                         ondragleave="handleDragLeave(event)"
-                         ondragend="handleDragEnd(event)">
-                         <span style="pointer-events: none;">${safeCat}</span>
+                         ondragstart="handleDragStart(event)" ondragover="handleDragOver(event)" ondrop="handleDrop(event)"
+                         ondragleave="handleDragLeave(event)" ondragend="handleDragEnd(event)">
+                         <span style="pointer-events: none;">${escapeHTML(cat)}</span>
                          <span class="category-remove" onclick="removeCategory(${index})" title="刪除分類" style="color: ${style.text};">&times;</span>
                     </div>
                 `;
@@ -416,9 +348,7 @@
         }
         
         const catSelect = document.getElementById('new-res-category');
-        if (catSelect) {
-            catSelect.innerHTML = categoryList.map(cat => `<option value="${escapeHTML(cat)}">${escapeHTML(cat)}</option>`).join('');
-        }
+        if (catSelect) catSelect.innerHTML = categoryList.map(cat => `<option value="${escapeHTML(cat)}">${escapeHTML(cat)}</option>`).join('');
     }
 
     function handleDragStart(e) {
@@ -426,45 +356,32 @@
         e.dataTransfer.effectAllowed = 'move';
         setTimeout(() => e.target.style.opacity = '0.3', 0);
     }
-
     function handleDragOver(e) {
-        e.preventDefault(); 
-        e.dataTransfer.dropEffect = 'move';
-        const targetBadge = e.target.closest('.category-badge');
-        if (targetBadge && parseInt(targetBadge.getAttribute('data-index')) !== dragStartIndex) {
-            targetBadge.classList.add('drag-over');
-        }
+        e.preventDefault(); e.dataTransfer.dropEffect = 'move';
+        const tb = e.target.closest('.category-badge');
+        if (tb && parseInt(tb.getAttribute('data-index')) !== dragStartIndex) tb.classList.add('drag-over');
     }
-
     function handleDragLeave(e) {
-        const targetBadge = e.target.closest('.category-badge');
-        if (targetBadge) {
-            targetBadge.classList.remove('drag-over');
-        }
+        const tb = e.target.closest('.category-badge');
+        if (tb) tb.classList.remove('drag-over');
     }
-
     function handleDrop(e) {
         e.preventDefault();
-        const targetBadge = e.target.closest('.category-badge');
-        if (!targetBadge) return;
-        
-        targetBadge.classList.remove('drag-over');
-        const dropIndex = parseInt(targetBadge.getAttribute('data-index'));
+        const tb = e.target.closest('.category-badge');
+        if (!tb) return;
+        tb.classList.remove('drag-over');
+        const dropIndex = parseInt(tb.getAttribute('data-index'));
         
         if (dragStartIndex !== null && dragStartIndex !== dropIndex) {
-            const draggedItem = categoryList.splice(dragStartIndex, 1)[0];
-            categoryList.splice(dropIndex, 0, draggedItem);
-            
+            categoryList.splice(dropIndex, 0, categoryList.splice(dragStartIndex, 1)[0]);
             localStorage.setItem('lunchCategories', JSON.stringify(categoryList));
-            initCategoryDisplay();
-            initUserRestaurantSelect();
+            initCategoryDisplay(); initUserRestaurantSelect();
         }
     }
-
     function handleDragEnd(e) {
         e.target.style.opacity = '1';
         dragStartIndex = null;
-        document.querySelectorAll('.category-badge').forEach(badge => badge.classList.remove('drag-over'));
+        document.querySelectorAll('.category-badge').forEach(b => b.classList.remove('drag-over'));
     }
 
     function addNewCategory() {
@@ -476,18 +393,14 @@
         categoryList.push(newCat);
         localStorage.setItem('lunchCategories', JSON.stringify(categoryList));
         document.getElementById('new-category-name').value = '';
-        initCategoryDisplay();
-        initUserRestaurantSelect();
+        initCategoryDisplay(); initUserRestaurantSelect();
     }
 
     function removeCategory(index) {
-        const catName = escapeHTML(categoryList[index]);
-        if (confirm(`確定要刪除「${catName}」分類嗎？\n(已有此分類的餐廳不會自動刪除，將被歸類為"未分類")`)) {
+        if (confirm(`確定要刪除「${escapeHTML(categoryList[index])}」分類嗎？\n(已有此分類的餐廳不會自動刪除，將被歸類為"未分類")`)) {
             categoryList.splice(index, 1);
             localStorage.setItem('lunchCategories', JSON.stringify(categoryList));
-            initCategoryDisplay();
-            initUserRestaurantSelect();
-            renderSettingRestaurantList();
+            initCategoryDisplay(); initUserRestaurantSelect(); renderSettingRestaurantList();
         }
     }
 
@@ -496,23 +409,20 @@
         const editSelect = document.getElementById('edit-restaurant-select');
         let options = '<option value="">-- 請選擇 --</option>';
         
-        let groupedRestaurants = {};
-        
-        categoryList.forEach(cat => groupedRestaurants[cat] = []);
-        groupedRestaurants['未分類'] = [];
+        let grouped = {};
+        categoryList.forEach(cat => grouped[cat] = []);
+        grouped['未分類'] = [];
         
         restaurantList.forEach(res => {
             let cat = res.category || '未分類';
             if (!categoryList.includes(cat) && cat !== '未分類') cat = '未分類'; 
-            groupedRestaurants[cat].push(res);
+            grouped[cat].push(res);
         });
         
-        for (let cat in groupedRestaurants) {
-            if (groupedRestaurants[cat].length === 0) continue; 
+        for (let cat in grouped) {
+            if (grouped[cat].length === 0) continue; 
             options += `<optgroup label="📂 ${escapeHTML(cat)}">`;
-            groupedRestaurants[cat].forEach(res => {
-                options += `<option value="${escapeHTML(res.name)}" data-img="${escapeHTML(res.img)}">${escapeHTML(res.name)}</option>`;
-            });
+            grouped[cat].forEach(res => { options += `<option value="${escapeHTML(res.name)}" data-img="${escapeHTML(res.img)}">${escapeHTML(res.name)}</option>`; });
             options += `</optgroup>`;
         }
         
@@ -526,64 +436,45 @@
         const wrapper = document.getElementById('menu-wrapper');
         const imgEl = document.getElementById('display-img-menu');
         
-        if (select.selectedIndex <= 0) {
-            wrapper.style.display = 'none';
-            return;
-        }
+        if (select.selectedIndex <= 0) return wrapper.style.display = 'none';
 
-        const selectedOption = select.options[select.selectedIndex];
-        const imgSrc = selectedOption.getAttribute('data-img');
-
-        if (imgSrc) {
-            if (isValidImageUrl(imgSrc)) {
-                // 增加過渡效果避免殘影
-                imgEl.style.opacity = '0.3'; 
-                imgEl.onload = () => { imgEl.style.opacity = '1'; };
-                imgEl.src = imgSrc;
-                
-                imgEl.onerror = () => {
-                    wrapper.style.display = 'none';
-                    console.warn('Failed to load image:', imgSrc);
-                };
-                wrapper.style.display = 'flex';
-            } else {
-                wrapper.style.display = 'none';
-            }
+        const imgSrc = select.options[select.selectedIndex].getAttribute('data-img');
+        if (imgSrc && isValidImageUrl(imgSrc)) {
+            imgEl.style.opacity = '0.3'; 
+            imgEl.onload = () => imgEl.style.opacity = '1';
+            imgEl.src = imgSrc;
+            imgEl.onerror = () => wrapper.style.display = 'none';
+            wrapper.style.display = 'flex';
         } else {
             wrapper.style.display = 'none';
         }
     }
 
     function isValidImageUrl(url) {
-        try {
-            new URL(url);
-            return true;
-        } catch {
-            return /^[\w\-\.\/]+\.(jpg|jpeg|png|gif|webp)$/i.test(url);
-        }
+        try { new URL(url); return true; } 
+        catch { return /^[\w\-\.\/]+\.(jpg|jpeg|png|gif|webp)$/i.test(url); }
     }
 
     function renderSettingRestaurantList() {
         const list = document.getElementById('setting-res-list');
-        if(restaurantList.length === 0) {
-            list.innerHTML = '<li style="color:#888;">目前尚無名單，請在上方新增</li>';
-            return;
-        }
+        if(restaurantList.length === 0) return list.innerHTML = '<li style="color:#888;">目前尚無名單，請在上方新增</li>';
         
         list.innerHTML = restaurantList.map((res, index) => {
             const style = getCategoryStyle(res.category || '未分類');
             const safeName = escapeHTML(res.name);
             const safeImg = escapeHTML(res.img || '無圖片');
+            
+            // 🐛 在這裡修正了排版 Bug，使用 .res-info 限制寬度並允許文字截斷
             return `
                 <li>
-                    <span>
-                        <span class="store-badge" style="background: ${style.bg}; color: ${style.text}; border: 1px solid ${style.border}; font-size:11px; font-weight:bold;">${escapeHTML(res.category || '未分類')}</span>
+                    <span class="res-info">
+                        <span class="store-badge" style="background: ${style.bg}; color: ${style.text}; border: 1px solid ${style.border};">${escapeHTML(res.category || '未分類')}</span>
                         <strong>${safeName}</strong> 
-                        <small class="text-truncate">(${safeImg})</small>
+                        <span class="text-truncate" title="${safeImg}">(${safeImg})</span>
                     </span>
-                    <div>
-                        <button class="btn-edit" style="padding: 4px 8px; margin: 0 5px 0 0;" onclick="editRestaurant(${index})">修改</button>
-                        <button class="btn-remove" style="padding: 4px 8px; margin: 0;" onclick="removeRestaurant(${index})">刪除</button>
+                    <div class="res-actions">
+                        <button class="btn-edit" onclick="editRestaurant(${index})">修改</button>
+                        <button class="btn-remove" onclick="removeRestaurant(${index})">刪除</button>
                     </div>
                 </li>
             `;
@@ -599,22 +490,19 @@
         if (name.length > 100) return alert('餐廳名稱過長（最多100字）');
         if (img && img.length > 500) return alert('圖片 URL 過長（最多500字）');
         
-        restaurantList.push({ name: name, img: img, category: cat });
+        restaurantList.push({ name, img, category: cat });
         localStorage.setItem('lunchRestaurants', JSON.stringify(restaurantList));
         
         document.getElementById('new-res-name').value = '';
         document.getElementById('new-res-img').value = '';
-        
-        renderSettingRestaurantList();
-        initUserRestaurantSelect();
+        renderSettingRestaurantList(); initUserRestaurantSelect();
     }
 
     function removeRestaurant(index) {
         if (confirm('確定要從名單移除這家餐廳嗎？')) {
             restaurantList.splice(index, 1);
             localStorage.setItem('lunchRestaurants', JSON.stringify(restaurantList));
-            renderSettingRestaurantList();
-            initUserRestaurantSelect();
+            renderSettingRestaurantList(); initUserRestaurantSelect();
         }
     }
 
@@ -640,22 +528,14 @@
         const newImg = document.getElementById('edit-res-img-input').value.trim();
         
         if (!newName) return alert('餐廳名稱不能為空！');
-        if (newName.length > 100) return alert('餐廳名稱過長（最多100字）');
-        if (newImg && newImg.length > 500) return alert('圖片 URL 過長（最多500字）');
         
         const oldName = restaurantList[index].name;
-        restaurantList[index].category = newCat;
-        restaurantList[index].name = newName;
-        restaurantList[index].img = newImg;
-        
+        restaurantList[index] = { ...restaurantList[index], category: newCat, name: newName, img: newImg };
         localStorage.setItem('lunchRestaurants', JSON.stringify(restaurantList));
         
         let ordersChanged = false;
         allOrders.forEach(order => {
-            if (order.restaurant === oldName) {
-                order.restaurant = newName;
-                ordersChanged = true;
-            }
+            if (order.restaurant === oldName) { order.restaurant = newName; ordersChanged = true; }
         });
         
         if (ordersChanged) {
@@ -663,47 +543,30 @@
             renderPublicList();
         }
         
-        closeModals();
-        renderSettingRestaurantList();
-        initUserRestaurantSelect();
-        if (document.getElementById('manager-area').style.display === 'block') {
-            renderManagerArea();
-        }
+        closeModals(); renderSettingRestaurantList(); initUserRestaurantSelect();
+        if (document.getElementById('manager-area').style.display === 'block') renderManagerArea();
         alert('✅ 修改成功！');
     }
 
     function addItem() {
-        const container = document.getElementById('items-container');
-        const row = document.createElement('div');
-        row.className = 'item-row';
-        row.innerHTML = `
-            <input type="text" class="item-name" placeholder="品項 (如:排骨飯)" maxlength="100" onchange="calculateFormTotal()">
-            <input type="text" class="item-remark" placeholder="備註 (如:加大、少飯)" maxlength="100">
-            <input type="number" class="item-price" placeholder="單價" min="0" oninput="validateNumber(this); calculateFormTotal()">
-            <input type="number" class="item-qty" placeholder="數量" min="1" value="1" oninput="validateNumber(this); calculateFormTotal()">
-            <button class="btn btn-remove" onclick="this.parentElement.remove(); calculateFormTotal();">刪除</button>
-        `;
-        container.appendChild(row);
+        document.getElementById('items-container').insertAdjacentHTML('beforeend', `
+            <div class="item-row">
+                <input type="text" class="item-name" placeholder="品項 (如:排骨飯)" maxlength="100" onchange="calculateFormTotal()">
+                <input type="text" class="item-remark" placeholder="備註 (如:加大、少飯)" maxlength="100">
+                <input type="number" class="item-price" placeholder="單價" min="0" oninput="validateNumber(this); calculateFormTotal()">
+                <input type="number" class="item-qty" placeholder="數量" min="1" value="1" oninput="validateNumber(this); calculateFormTotal()">
+                <button class="btn btn-remove" onclick="this.parentElement.remove(); calculateFormTotal();">刪除</button>
+            </div>`);
     }
 
     function calculateFormTotal() {
         let total = 0;
-        const prices = document.querySelectorAll('.item-price');
-        const qtys = document.querySelectorAll('.item-qty');
+        const prices = document.querySelectorAll('.item-price'), qtys = document.querySelectorAll('.item-qty');
         for (let i = 0; i < prices.length; i++) {
-            const price = Math.max(0, Math.min(100000, parseFloat(prices[i].value) || 0));
-            const qty = Math.max(0, Math.min(1000, parseInt(qtys[i].value) || 0));
-            total += (price * qty);
+            total += (Math.max(0, parseFloat(prices[i].value) || 0) * Math.max(0, parseInt(qtys[i].value) || 0));
         }
-        total = Math.min(total, 999999);
-        // 加上千分位顯示
-        document.getElementById('form-total').innerText = total.toLocaleString('en-US');
-        return total;
-    }
-
-    function getCurrentDateTime() {
-        const now = new Date();
-        return now.toLocaleString('zh-TW', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' });
+        document.getElementById('form-total').innerText = Math.min(total, 999999).toLocaleString('en-US');
+        return Math.min(total, 999999);
     }
 
     function submitOrder() {
@@ -712,43 +575,30 @@
         
         if (!restaurant) return alert('請先選擇餐廳！');
         if (!name) return alert('請填寫姓名！');
-        if (name.length > 50) return alert('姓名過長（最多50字）');
 
         const items = [];
-        const names = document.querySelectorAll('.item-name');
-        const remarks = document.querySelectorAll('.item-remark'); 
-        const prices = document.querySelectorAll('.item-price');
-        const qtys = document.querySelectorAll('.item-qty');
+        const names = document.querySelectorAll('.item-name'), remarks = document.querySelectorAll('.item-remark'); 
+        const prices = document.querySelectorAll('.item-price'), qtys = document.querySelectorAll('.item-qty');
 
         for (let i = 0; i < names.length; i++) {
-            const itemName = names[i].value.trim();
-            const itemRemark = remarks[i] ? remarks[i].value.trim() : ''; 
-            const itemPrice = Math.max(0, Math.min(100000, parseFloat(prices[i].value) || 0));
-            const itemQty = Math.max(0, Math.min(1000, parseInt(qtys[i].value) || 0));
-            
-            if (itemName && itemQty > 0) {
-                items.push({ name: itemName, remark: itemRemark, price: itemPrice, qty: itemQty });
-            }
+            const n = names[i].value.trim(), q = Math.max(0, parseInt(qtys[i].value) || 0);
+            if (n && q > 0) items.push({ 
+                name: n, remark: remarks[i] ? remarks[i].value.trim() : '', 
+                price: Math.max(0, parseFloat(prices[i].value) || 0), qty: q 
+            });
         }
 
         if (items.length === 0) return alert('請完整輸入有效餐點與數量！');
 
-        allOrders.push({ 
-            person: name, 
-            restaurant: restaurant, 
-            details: items, 
-            total: calculateFormTotal(), 
-            timestamp: getCurrentDateTime() 
-        });
-        
+        allOrders.push({ person: name, restaurant, details: items, total: calculateFormTotal(), timestamp: new Date().toLocaleString('zh-TW', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' }) });
         localStorage.setItem('lunchOrdersMulti', JSON.stringify(allOrders));
         alert('✅ 訂單送出成功！');
         
         document.getElementById('name').value = '';
         document.getElementById('items-container').innerHTML = `
             <div class="item-row">
-                <input type="text" class="item-name" placeholder="品項 (如:排骨飯)" maxlength="100" onchange="calculateFormTotal()">
-                <input type="text" class="item-remark" placeholder="備註 (如:加大、少飯)" maxlength="100">
+                <input type="text" class="item-name" placeholder="品項" maxlength="100" onchange="calculateFormTotal()">
+                <input type="text" class="item-remark" placeholder="備註" maxlength="100">
                 <input type="number" class="item-price" placeholder="單價" min="0" oninput="validateNumber(this); calculateFormTotal()">
                 <input type="number" class="item-qty" placeholder="數量" min="1" value="1" oninput="validateNumber(this); calculateFormTotal()">
             </div>`;
@@ -762,34 +612,18 @@
         const container = document.getElementById('public-orders-container');
         if (allOrders.length === 0) return container.innerHTML = '<p style="color: #888;">目前還沒有人點餐喔！</p>';
         
-        container.innerHTML = allOrders.map(order => {
-            const safePerson = escapeHTML(order.person);
-            const safeRes = escapeHTML(order.restaurant);
-            const safeTime = escapeHTML(order.timestamp);
-            return `<div class="order-card">
+        container.innerHTML = allOrders.map(order => `
+            <div class="order-card">
                 <div style="display: flex; justify-content: space-between; align-items: flex-start;">
-                    <div>
-                        <strong>${safePerson}</strong> 
-                        <span class="store-badge">${safeRes}</span>
-                        <span class="time-stamp">(${safeTime})</span>
-                    </div>
+                    <div><strong>${escapeHTML(order.person)}</strong> <span class="store-badge">${escapeHTML(order.restaurant)}</span> <span class="time-stamp">(${escapeHTML(order.timestamp)})</span></div>
                     <strong style="color: #c0392b; font-size: 16px;">總計: $${order.total.toLocaleString('en-US')}</strong>
                 </div>
-                <div style="margin-top: 5px;">點了： ${order.details.map(item => {
-                    const safeItemName = escapeHTML(item.name);
-                    const safeRemark = escapeHTML(item.remark || '');
-                    let remarkText = item.remark ? `<span style="color:#e74c3c; font-size: 0.9em;">(${safeRemark})</span>` : '';
-                    return `${safeItemName} ${remarkText} <span style="color:#666; font-size: 0.9em;">($${item.price} x ${item.qty})</span>`;
-                }).join('、')}</div>
-            </div>`;
-        }).join('');
+                <div style="margin-top: 5px;">點了： ${order.details.map(item => `${escapeHTML(item.name)} ${item.remark ? `<span style="color:#e74c3c; font-size: 0.9em;">(${escapeHTML(item.remark)})</span>` : ''} <span style="color:#666; font-size: 0.9em;">($${item.price} x ${item.qty})</span>`).join('、')}</div>
+            </div>`).join('');
     }
 
     function closeModals() {
-        document.getElementById('overlay').style.display = 'none';
-        document.getElementById('login-modal').style.display = 'none';
-        document.getElementById('edit-modal').style.display = 'none';
-        document.getElementById('edit-res-modal').style.display = 'none';
+        ['overlay', 'login-modal', 'edit-modal', 'edit-res-modal'].forEach(id => document.getElementById(id).style.display = 'none');
         document.getElementById('manager-password').value = '';
     }
 
@@ -800,184 +634,81 @@
     }
 
     function verifyLogin() {
-        const pwd = document.getElementById('manager-password').value;
-        
-        if (constantTimeCompare(pwd, PASSWORD_CONFIG.manager)) {
+        if (constantTimeCompare(document.getElementById('manager-password').value, PASSWORD_CONFIG.manager)) {
             closeModals();
-            sessionData.isManagerLoggedIn = true;
-            sessionData.loginTime = Date.now();
+            sessionData = { isManagerLoggedIn: true, loginTime: Date.now(), sessionTimeout: 30 * 60 * 1000 };
             updateSessionInfo();
             document.getElementById('manager-area').style.display = 'block';
-            
-            // 🐛 修正：登入時確保分類標籤有被渲染
-            initCategoryDisplay(); 
-            
-            renderSettingRestaurantList();
-            renderManagerArea();
+            initCategoryDisplay(); renderSettingRestaurantList(); renderManagerArea();
         } else {
             alert('❌ 密碼錯誤！');
             document.getElementById('manager-password').value = '';
         }
     }
 
-    function logoutManager() { 
-        sessionData.isManagerLoggedIn = false;
-        sessionData.loginTime = null;
-        document.getElementById('manager-area').style.display = 'none';
-    }
+    function logoutManager() { sessionData = { isManagerLoggedIn: false, loginTime: null, sessionTimeout: 0 }; document.getElementById('manager-area').style.display = 'none'; }
 
     function renderManagerArea() {
-        let grandTotal = 0;
-        let summaryByRes = {}; 
+        let grandTotal = 0, summaryByRes = {}; 
         
-        const html = allOrders.map((order, index) => {
+        document.getElementById('manager-table-body').innerHTML = allOrders.map((order, index) => {
             grandTotal += order.total;
-            
             if (!summaryByRes[order.restaurant]) summaryByRes[order.restaurant] = {};
             
             order.details.forEach(item => {
-                let cleanName = item.name.trim(); 
-                let remark = item.remark ? item.remark.trim() : '無備註';
-                
-                if (!summaryByRes[order.restaurant][cleanName]) {
-                    summaryByRes[order.restaurant][cleanName] = { total: 0, remarks: {} };
-                }
-                
+                let cleanName = item.name.trim(), remark = item.remark ? item.remark.trim() : '無備註';
+                if (!summaryByRes[order.restaurant][cleanName]) summaryByRes[order.restaurant][cleanName] = { total: 0, remarks: {} };
                 summaryByRes[order.restaurant][cleanName].total += item.qty;
-                
-                if (!summaryByRes[order.restaurant][cleanName].remarks[remark]) {
-                    summaryByRes[order.restaurant][cleanName].remarks[remark] = 0;
-                }
-                summaryByRes[order.restaurant][cleanName].remarks[remark] += item.qty;
+                summaryByRes[order.restaurant][cleanName].remarks[remark] = (summaryByRes[order.restaurant][cleanName].remarks[remark] || 0) + item.qty;
             });
             
-            const safePerson = escapeHTML(order.person);
-            const safeTime = escapeHTML(order.timestamp);
-            const safeRes = escapeHTML(order.restaurant);
-            
             return `<tr>
-                <td>${safePerson}<br><small style="color:#777">${safeTime}</small></td>
-                <td>
-                    <span class="store-badge">${safeRes}</span><br>
-                    ${order.details.map(item => {
-                        const safeItem = escapeHTML(item.name);
-                        const safeRemark = escapeHTML(item.remark || '');
-                        return `${safeItem} ${item.remark ? `<span style="color:#e74c3c;">(${safeRemark})</span>` : ''} ($${item.price} x ${item.qty})`;
-                    }).join('<br>')}
-                </td>
+                <td>${escapeHTML(order.person)}<br><small style="color:#777">${escapeHTML(order.timestamp)}</small></td>
+                <td><span class="store-badge">${escapeHTML(order.restaurant)}</span><br>${order.details.map(i => `${escapeHTML(i.name)} ${i.remark ? `<span style="color:#e74c3c;">(${escapeHTML(i.remark)})</span>` : ''} ($${i.price} x ${i.qty})`).join('<br>')}</td>
                 <td><strong>$${order.total.toLocaleString('en-US')}</strong></td>
-                <td class="action-td">
-                    <button class="btn-edit" onclick="openEditModal(${index})">✏️</button>
-                    <button class="btn-remove" onclick="deleteSingleOrder(${index})">刪</button>
-                </td>
+                <td class="action-td"><button class="btn-edit" onclick="openEditModal(${index})">✏️</button> <button class="btn-remove" onclick="deleteSingleOrder(${index})">刪</button></td>
             </tr>`;
         }).join('');
 
         let summaryHtml = '';
-        if (Object.keys(summaryByRes).length === 0) {
-            summaryHtml = '<p style="color:#888;">無資料</p>';
-        } else {
-            for (let resName in summaryByRes) {
-                const safeResName = escapeHTML(resName);
-                summaryHtml += `<div class="res-group-title">🏠 餐廳：${safeResName}</div>`;
-                summaryHtml += `<ul class="summary-list">`;
-                for (let itemName in summaryByRes[resName]) {
-                    let itemData = summaryByRes[resName][itemName];
-                    const safeItemName = escapeHTML(itemName);
-                    
-                    let detailsArr = [];
-                    for (let rm in itemData.remarks) {
-                        let displayRm = (rm === '無備註') ? '正常' : escapeHTML(rm);
-                        detailsArr.push(`<span style="display: inline-flex; align-items: center; background: #f1f3f5; border: 1px solid #dee2e6; border-radius: 15px; padding: 3px 10px; margin: 4px 4px 0 0;">${displayRm} <strong style="margin-left: 5px; color: #d35400;">x${itemData.remarks[rm]}</strong></span>`);
-                    }
-                    
-                    let detailStr = `<div style="margin-top: 4px; padding-left: 10px; border-left: 3px solid #adb5bd; display: flex; flex-wrap: wrap;">${detailsArr.join('')}</div>`;
-                    
-                    summaryHtml += `
-                        <li>
-                            <div style="display: flex; justify-content: space-between; width: 100%;">
-                                <span>${safeItemName}</span> 
-                                <span class="summary-qty">共 ${itemData.total} 份</span>
-                            </div>
-                            ${detailStr}
-                        </li>`;
-                }
-                summaryHtml += `</ul>`;
+        for (let resName in summaryByRes) {
+            summaryHtml += `<div class="res-group-title">🏠 餐廳：${escapeHTML(resName)}</div><ul class="summary-list">`;
+            for (let itemName in summaryByRes[resName]) {
+                let d = summaryByRes[resName][itemName], detailsArr = [];
+                for (let rm in d.remarks) detailsArr.push(`<span style="display: inline-flex; align-items: center; background: #f1f3f5; border: 1px solid #dee2e6; border-radius: 15px; padding: 3px 10px; margin: 4px 4px 0 0;">${escapeHTML(rm === '無備註' ? '正常' : rm)} <strong style="margin-left: 5px; color: #d35400;">x${d.remarks[rm]}</strong></span>`);
+                summaryHtml += `<li><div style="display: flex; justify-content: space-between; width: 100%;"><span>${escapeHTML(itemName)}</span> <span class="summary-qty">共 ${d.total} 份</span></div><div style="margin-top: 4px; padding-left: 10px; border-left: 3px solid #adb5bd; display: flex; flex-wrap: wrap;">${detailsArr.join('')}</div></li>`;
             }
+            summaryHtml += `</ul>`;
         }
-
-        document.getElementById('manager-table-body').innerHTML = html;
-        document.getElementById('manager-summary-list').innerHTML = summaryHtml;
+        document.getElementById('manager-summary-list').innerHTML = summaryHtml || '<p style="color:#888;">無資料</p>';
         document.getElementById('manager-grand-total').innerText = grandTotal.toLocaleString('en-US');
     }
 
     function deleteSingleOrder(index) {
-        const personName = escapeHTML(allOrders[index].person);
-        if (confirm(`確定要刪除 ${personName} 的訂單嗎？`)) {
+        if (confirm(`確定要刪除 ${escapeHTML(allOrders[index].person)} 的訂單嗎？`)) {
             allOrders.splice(index, 1);
             localStorage.setItem('lunchOrdersMulti', JSON.stringify(allOrders));
-            renderPublicList();
-            renderManagerArea();
+            renderPublicList(); renderManagerArea();
         }
     }
 
     function confirmClearOrders() {
-        if (confirm('⚠️ 警告：此操作將清空所有訂單且無法復原！\n建議清空前先匯出備份喔！\n\n確定要清空所有訂單嗎？')) {
-            if (confirm('最後確認：真的要清空所有訂單嗎？')) {
-                clearOrders();
-            }
+        if (confirm('⚠️ 警告：此操作將清空所有訂單且無法復原！\n確定要清空嗎？') && confirm('最後確認：真的要清空？')) {
+            allOrders = []; localStorage.removeItem('lunchOrdersMulti');
+            renderPublicList(); renderManagerArea(); logoutManager(); alert('✅ 所有訂單已清空');
         }
-    }
-
-    function clearOrders() {
-        allOrders = [];
-        localStorage.removeItem('lunchOrdersMulti');
-        renderPublicList();
-        renderManagerArea();
-        logoutManager();
-        alert('✅ 所有訂單已清空');
     }
 
     function exportToCSV() {
         if (allOrders.length === 0) return alert('目前沒有訂單可以匯出喔！');
+        const today = new Date(), fn = prompt('💾 請輸入要匯出的檔案名稱：', `午餐備份_${today.getFullYear()}${(today.getMonth()+1).toString().padStart(2, '0')}${today.getDate().toString().padStart(2, '0')}`);
+        if (fn === null) return; 
         
-        const today = new Date();
-        const defaultFileName = `午餐訂購備份_${today.getFullYear()}${(today.getMonth()+1).toString().padStart(2, '0')}${today.getDate().toString().padStart(2, '0')}`;
+        let csv = "\uFEFF訂購時間,訂購人,選擇餐廳,品項,備註,單價,數量,小計,總應付\n";
+        allOrders.forEach(o => o.details.forEach((i, idx) => csv += `${o.timestamp},"${o.person.replace(/"/g, '""')}","${o.restaurant.replace(/"/g, '""')}","${i.name.replace(/"/g, '""')}","${(i.remark||'').replace(/"/g, '""')}",${i.price},${i.qty},${i.price * i.qty},${idx === 0 ? o.total : ""}\n`));
         
-        const userFileName = prompt('💾 請輸入要匯出的檔案名稱：', defaultFileName);
-        if (userFileName === null) return; 
-        
-        if (!isValidFileName(userFileName)) return alert('檔案名稱包含非法字符');
-        const finalFileName = userFileName.trim() === '' ? defaultFileName : userFileName.trim();
-
-        let csvContent = "\uFEFF訂購時間,訂購人,選擇餐廳,品項,備註,單價,數量,各品項小計,該人總應付金額\n";
-        
-        allOrders.forEach(order => {
-            order.details.forEach((item, index) => {
-                let totalStr = (index === 0) ? order.total : "";
-                
-                let safePerson = `"${order.person.replace(/"/g, '""')}"`;
-                let safeRes = `"${order.restaurant.replace(/"/g, '""')}"`;
-                let safeItem = `"${item.name.replace(/"/g, '""')}"`;
-                let safeRemark = item.remark ? `"${item.remark.replace(/"/g, '""')}"` : ""; 
-                
-                csvContent += `${order.timestamp},${safePerson},${safeRes},${safeItem},${safeRemark},${item.price},${item.qty},${item.price * item.qty},${totalStr}\n`;
-            });
-        });
-        
-        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-        const link = document.createElement("a");
-        link.href = URL.createObjectURL(blob);
-        link.download = `${finalFileName}.csv`;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        URL.revokeObjectURL(link.href);
-    }
-
-    function isValidFileName(fileName) {
-        const invalidChars = /[<>:"|?*\x00-\x1f]/g;
-        return !invalidChars.test(fileName) && fileName.length > 0 && fileName.length <= 255;
+        const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8;' })); a.download = `${fn.trim() || '備份'}.csv`;
+        document.body.appendChild(a); a.click(); document.body.removeChild(a);
     }
 
     function openEditModal(index) {
@@ -986,21 +717,16 @@
         document.getElementById('edit-name').value = order.person;
         document.getElementById('edit-restaurant-select').value = order.restaurant;
         
-        document.getElementById('edit-items-container').innerHTML = order.details.map(item => {
-            const safeItemName = escapeHTML(item.name);
-            const safeRemark = escapeHTML(item.remark || '');
-            return `
+        document.getElementById('edit-items-container').innerHTML = order.details.map(item => `
             <div class="item-row">
-                <input type="text" class="edit-item-name" value="${safeItemName}" placeholder="品項" maxlength="100">
-                <input type="text" class="edit-item-remark" value="${safeRemark}" placeholder="備註" maxlength="100">
+                <input type="text" class="edit-item-name" value="${escapeHTML(item.name)}" placeholder="品項" maxlength="100">
+                <input type="text" class="edit-item-remark" value="${escapeHTML(item.remark || '')}" placeholder="備註" maxlength="100">
                 <input type="number" class="edit-item-price" value="${item.price}" placeholder="單價" min="0" oninput="validateNumber(this)">
                 <input type="number" class="edit-item-qty" value="${item.qty}" placeholder="數量" min="1" oninput="validateNumber(this)">
                 <button class="btn btn-remove" onclick="this.parentElement.remove()">刪除</button>
-            </div>`;
-        }).join('');
+            </div>`).join('');
             
-        document.getElementById('overlay').style.display = 'block';
-        document.getElementById('edit-modal').style.display = 'block';
+        document.getElementById('overlay').style.display = 'block'; document.getElementById('edit-modal').style.display = 'block';
     }
 
     function addEditItem() {
@@ -1015,42 +741,22 @@
     }
 
     function saveEditOrder() {
-        const index = document.getElementById('edit-index').value;
-        const newName = document.getElementById('edit-name').value.trim();
-        const newRestaurant = document.getElementById('edit-restaurant-select').value;
-        
-        if (!newName || !newRestaurant) return alert('姓名與餐廳不得為空！');
-        if (newName.length > 50) return alert('姓名過長（最多50字）');
+        const idx = document.getElementById('edit-index').value, name = document.getElementById('edit-name').value.trim(), res = document.getElementById('edit-restaurant-select').value;
+        if (!name || !res) return alert('姓名與餐廳不得為空！');
 
-        const names = document.querySelectorAll('.edit-item-name');
-        const remarks = document.querySelectorAll('.edit-item-remark'); 
-        const prices = document.querySelectorAll('.edit-item-price');
-        const qtys = document.querySelectorAll('.edit-item-qty');
-        
-        const newItems = [];
+        const newItems = [], names = document.querySelectorAll('.edit-item-name'), remarks = document.querySelectorAll('.edit-item-remark'), prices = document.querySelectorAll('.edit-item-price'), qtys = document.querySelectorAll('.edit-item-qty');
         let newTotal = 0;
+        
         for (let i = 0; i < names.length; i++) {
-            const itemName = names[i].value.trim();
-            const itemRemark = remarks[i] ? remarks[i].value.trim() : '';
-            const itemQty = Math.max(0, Math.min(1000, parseInt(qtys[i].value) || 0));
-            const itemPrice = Math.max(0, Math.min(100000, parseFloat(prices[i].value) || 0));
-            if (itemName && itemQty > 0) {
-                newItems.push({ name: itemName, remark: itemRemark, price: itemPrice, qty: itemQty });
-                newTotal += (itemPrice * itemQty);
-            }
+            const n = names[i].value.trim(), q = Math.max(0, parseInt(qtys[i].value) || 0), p = Math.max(0, parseFloat(prices[i].value) || 0);
+            if (n && q > 0) { newItems.push({ name: n, remark: remarks[i] ? remarks[i].value.trim() : '', price: p, qty: q }); newTotal += (p * q); }
         }
         if (newItems.length === 0) return alert('訂單不能沒有餐點！若要取消請直接點選刪除。');
 
-        allOrders[index].person = newName;
-        allOrders[index].restaurant = newRestaurant;
-        allOrders[index].details = newItems;
-        allOrders[index].total = Math.min(newTotal, 999999);
+        allOrders[idx] = { ...allOrders[idx], person: name, restaurant: res, details: newItems, total: Math.min(newTotal, 999999) };
         localStorage.setItem('lunchOrdersMulti', JSON.stringify(allOrders));
         
-        closeModals();
-        renderPublicList();
-        renderManagerArea();
-        alert('✅ 修改成功！叫餐總表已自動重新計算。');
+        closeModals(); renderPublicList(); renderManagerArea(); alert('✅ 修改成功！');
     }
 </script>
 </body>
