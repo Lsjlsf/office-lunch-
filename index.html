@@ -274,10 +274,11 @@
     <button class="btn btn-manager" onclick="closeModals()">取消</button>
 </div>
 
+<!-- 引入餐廳配置 -->
+<script src="restaurants-config.js"></script>
+
 <script>
     // 🔒 SECURITY CONFIGURATION
-    // 注意：在生產環境中，應該使用後端認證而不是客戶端密碼驗證
-    // 這些密碼應通過環境變數設定，絕不應硬編碼
     const PASSWORD_CONFIG = {
         office: '8888',        // 辦公室初始密碼 - 請改為安全的密碼
         manager: '1234'        // 管理員密碼 - 請改為安全的密碼
@@ -287,11 +288,10 @@
     let sessionData = {
         isManagerLoggedIn: false,
         loginTime: null,
-        sessionTimeout: 30 * 60 * 1000  // 30 分鐘超時
+        sessionTimeout: 30 * 60 * 1000
     };
 
-    // 安全會話監控
-    setInterval(checkSessionTimeout, 60000);  // 每分鐘檢查一次
+    setInterval(checkSessionTimeout, 60000);
 
     function checkSessionTimeout() {
         if (sessionData.isManagerLoggedIn && sessionData.loginTime) {
@@ -320,17 +320,21 @@
             return;
         }
         
-        // 安全比較（防止時序攻擊）
         if (constantTimeCompare(code, PASSWORD_CONFIG.office)) {
             document.getElementById('security-overlay').style.display = 'none';
             document.getElementById('office-passcode').value = '';
+            // 初始化餐廳配置
+            if (typeof initializeRestaurantsFromConfig === 'function') {
+                initializeRestaurantsFromConfig();
+                initUserRestaurantSelect();
+                renderPublicList();
+            }
         } else {
             alert('❌ 密碼錯誤，請確認您是內部員工！');
             document.getElementById('office-passcode').value = '';
         }
     }
 
-    // 常數時間比較（防止時序攻擊）
     function constantTimeCompare(a, b) {
         if (a.length !== b.length) return false;
         let result = 0;
@@ -350,7 +354,6 @@
     function validateNumber(input) {
         const val = parseFloat(input.value) || 0;
         if (val < 0) input.value = 0;
-        // 限制最大值
         if (val > 100000) input.value = 100000;
     }
 
@@ -358,7 +361,6 @@
     let restaurantList = JSON.parse(localStorage.getItem('lunchRestaurants')) || [];
     let categoryList = JSON.parse(localStorage.getItem('lunchCategories')) || ['便當', '麵食', '速食', '飲料', '其他'];
     
-    // 全新的智慧色彩記憶系統
     const palette = [
         { bg: '#e3f2fd', text: '#0d47a1', border: '#bbdefb' },
         { bg: '#e8f5e9', text: '#1b5e20', border: '#c8e6c9' },
@@ -385,10 +387,6 @@
     }
 
     let dragStartIndex = null;
-
-    initCategoryDisplay();
-    initUserRestaurantSelect();
-    renderPublicList();
 
     function initCategoryDisplay() {
         const container = document.getElementById('category-badges-container');
@@ -417,7 +415,6 @@
         }
     }
 
-    // 拖曳相關函數
     function handleDragStart(e) {
         dragStartIndex = parseInt(e.target.getAttribute('data-index'));
         e.dataTransfer.effectAllowed = 'move';
@@ -532,7 +529,6 @@
         const imgSrc = selectedOption.getAttribute('data-img');
 
         if (imgSrc) {
-            // 驗證圖片 URL
             if (isValidImageUrl(imgSrc)) {
                 imgEl.src = imgSrc;
                 imgEl.onerror = () => {
@@ -549,7 +545,6 @@
     }
 
     function isValidImageUrl(url) {
-        // 簡單的 URL 驗證
         try {
             new URL(url);
             return true;
@@ -690,7 +685,7 @@
             const qty = Math.max(0, Math.min(1000, parseInt(qtys[i].value) || 0));
             total += (price * qty);
         }
-        total = Math.min(total, 999999);  // 限制最大總金額
+        total = Math.min(total, 999999);
         document.getElementById('form-total').innerText = total;
         return total;
     }
@@ -796,7 +791,6 @@
     function verifyLogin() {
         const pwd = document.getElementById('manager-password').value;
         
-        // 使用常數時間比較防止時序攻擊
         if (constantTimeCompare(pwd, PASSWORD_CONFIG.manager)) {
             closeModals();
             sessionData.isManagerLoggedIn = true;
@@ -938,7 +932,6 @@
         const userFileName = prompt('💾 請輸入要匯出的檔案名稱：', defaultFileName);
         if (userFileName === null) return; 
         
-        // 驗證檔案名稱
         if (!isValidFileName(userFileName)) return alert('檔案名稱包含非法字符');
         const finalFileName = userFileName.trim() === '' ? defaultFileName : userFileName.trim();
 
@@ -968,7 +961,6 @@
     }
 
     function isValidFileName(fileName) {
-        // 防止路徑穿越和非法字符
         const invalidChars = /[<>:"|?*\x00-\x1f]/g;
         return !invalidChars.test(fileName) && fileName.length > 0 && fileName.length <= 255;
     }
